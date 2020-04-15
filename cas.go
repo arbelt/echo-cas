@@ -1,6 +1,7 @@
 package echo_cas
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -15,6 +16,20 @@ func New(options *cas.Options) *CasMw {
 	mw := new(CasMw)
 	mw.client = cas.NewClient(options)
 	return mw
+}
+
+func (mw *CasMw) SetHeaders(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		r := ctx.Request()
+		username := cas.Username(r)
+		attrs := cas.Attributes(r)
+		r.Header.Set("X-CAS-User", username)
+		for k := range attrs {
+			r.Header.Set(fmt.Sprintf("X-CAS-Attr-%s", k), attrs.Get(k))
+		}
+		ctx.SetRequest(r)
+		return next(ctx)
+	}
 }
 
 // Remove ticket from URL params (this gets set in a cookie during the CAS auth flow)
@@ -53,5 +68,5 @@ func (mw *CasMw) Auth(next echo.HandlerFunc) echo.HandlerFunc {
 
 // All of the middlewares bundled together.
 func (mw *CasMw) All(next echo.HandlerFunc) echo.HandlerFunc {
-	return mw.ForceHTTPS(mw.Auth(mw.RemoveParam(next)))
+	return mw.ForceHTTPS(mw.Auth(mw.RemoveParam(mw.SetHeaders(next))))
 }
