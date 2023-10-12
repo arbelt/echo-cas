@@ -49,7 +49,7 @@ func (mw *CasMw) RemoveParam(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 // Largely for local development, but set the X-Forwarded-Proto header to https so that the callback from HarvardKey
-//has the right URL.
+// has the right URL.
 func (mw *CasMw) ForceHTTPS(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		r := c.Request()
@@ -64,6 +64,16 @@ func (mw *CasMw) Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	authHandler := echo.WrapMiddleware(mw.client.Handle)
 	checkHandler := echo.WrapMiddleware(mw.client.Handler)
 	return authHandler(checkHandler(next))
+}
+
+func (mw *CasMw) AuthnOnly(next echo.HandlerFunc) echo.HandlerFunc {
+	handler := echo.WrapMiddleware(mw.client.Handle)
+	return handler(next)
+}
+
+func (mw *CasMw) RequireCas(next echo.HandlerFunc) echo.HandlerFunc {
+	handler := echo.WrapMiddleware(mw.client.Handler)
+	return handler(next)
 }
 
 // All of the middlewares bundled together.
