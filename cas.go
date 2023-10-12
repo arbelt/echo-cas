@@ -18,6 +18,10 @@ func New(options *cas.Options) *CasMw {
 	return mw
 }
 
+func (mw *CasMw) CasClient() *cas.Client {
+	return mw.client
+}
+
 func (mw *CasMw) SetHeaders(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		r := ctx.Request()
